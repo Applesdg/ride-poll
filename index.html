@@ -49,16 +49,7 @@ button:active,.btn:active{transform:scale(.97)}
 <main>
   <div class="badge">Fri night · ride poll</div>
 
-  <section class="screen on" id="s-name">
-    <h1>Hey! What's your name? 👋</h1>
-    <form id="nameForm" novalidate>
-      <input id="name" name="name" type="text" maxlength="40" autocomplete="given-name" placeholder="Your name" required>
-      <div class="err" id="nameErr"></div>
-      <button class="primary" type="submit">Next →</button>
-    </form>
-  </section>
-
-  <section class="screen" id="s-q1">
+  <section class="screen on" id="s-q1">
     <h1>Want me to pick you up for tonight's activities?</h1>
     <div class="row">
       <button class="yes" id="btnYes">👍 Yes</button>
@@ -95,7 +86,7 @@ button:active,.btn:active{transform:scale(.97)}
   var NS = "applesdg-ride-poll-da04107c";
   var API = "https://abacus.jasoncameron.dev/hit/" + NS + "/";
   var PHONE = "+18172179760";
-  var STORE = "ridepoll-2026-10-09";
+  var STORE = "ridepoll-2026-10-09-v2";
   var $ = function(id){ return document.getElementById(id); };
 
   function load(){ try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch(e){ return {}; } }
@@ -117,7 +108,7 @@ button:active,.btn:active{transform:scale(.97)}
     return "Yes";
   }
   function smsHref(body){ return "sms:" + PHONE + "?&body=" + encodeURIComponent(body); }
-  function msg(s){ return "Ride poll: " + s.name + " — " + answerText(s); }
+  function msg(s){ return "Ride poll: " + answerText(s); }
 
   function renderDone(){
     if (st.ride === "no"){
@@ -127,28 +118,20 @@ button:active,.btn:active{transform:scale(.97)}
     } else {
       $("doneIcon").textContent = st.car === "tesla" ? "⚡" : "🛣️";
       $("doneTitle").textContent = "Got it! Tap below so Dom gets your answer";
-      $("doneSummary").textContent = st.name + ": " + answerText(st) + ". See you tonight!";
+      $("doneSummary").textContent = "You picked: " + answerText(st) + ". See you tonight!";
     }
     $("smsLink").href = smsHref(msg(st));
     show("s-done");
   }
   function renderAlready(){
-    $("alreadySummary").textContent = "You (" + st.name + ") said: " + answerText(st) + ".";
+    $("alreadySummary").textContent = "You said: " + answerText(st) + ".";
     $("smsAgain").href = smsHref(msg(st));
-    $("chTesla").href = smsHref("Ride poll CHANGE: " + st.name + " — Yes, Tesla");
-    $("chBronco").href = smsHref("Ride poll CHANGE: " + st.name + " — Yes, Bronco");
-    $("chNo").href = smsHref("Ride poll CHANGE: " + st.name + " — No");
+    $("chTesla").href = smsHref("Ride poll CHANGE: Yes, Tesla");
+    $("chBronco").href = smsHref("Ride poll CHANGE: Yes, Bronco");
+    $("chNo").href = smsHref("Ride poll CHANGE: No");
     show("s-already");
   }
 
-  $("nameForm").addEventListener("submit", function(e){
-    e.preventDefault();
-    var n = $("name").value.trim().replace(/\s+/g," ");
-    if (!n){ $("nameErr").textContent = "Please enter your name."; $("name").focus(); return; }
-    $("nameErr").textContent = "";
-    st = {name:n}; save(st);
-    show("s-q1");
-  });
   $("btnYes").addEventListener("click", function(){
     if (st.ride) return;
     st.ride = "yes"; save(st); hit("ride_yes"); show("s-q2");
@@ -167,7 +150,6 @@ button:active,.btn:active{transform:scale(.97)}
   // Resume / once-per-device
   if (st.done) renderAlready();
   else if (st.ride === "yes") show("s-q2");
-  else if (st.name){ $("name").value = st.name; }
 })();
 </script>
 </body>
