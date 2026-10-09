@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ride tonight?</title>
+<meta name="description" content="Quick poll from Dom: want a ride to tonight's activities? Tesla or Bronco?">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ride tonight?">
+<meta property="og:description" content="Quick poll from Dom: want a ride tonight? ⚡ Tesla or 🛣️ Bronco?">
+<meta property="og:url" content="https://applesdg.github.io/ride-poll/">
+<meta property="og:image" content="https://applesdg.github.io/ride-poll/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ride tonight?">
+<meta name="twitter:image" content="https://applesdg.github.io/ride-poll/og.png">
+<meta name="theme-color" content="#0d1117">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:480px;margin:0 auto;padding:calc(28px + env(safe-area-inset-top)) 20px 40px;min-height:100vh;display:flex;flex-direction:column}
+.badge{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#8b949e;margin-bottom:6px}
+h1{font-size:30px;line-height:1.2;margin:0 0 22px}
+p{color:#9da7b3;font-size:17px;line-height:1.45}
+.screen{display:none;animation:in .25s ease}
+.screen.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+input{width:100%;font-size:20px;padding:18px 16px;border-radius:14px;border:2px solid #30363d;background:#161b22;color:#fff;outline:none}
+input:focus{border-color:#58a6ff}
+.err{color:#ff7b72;font-size:15px;min-height:20px;margin:8px 2px 0}
+button,.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:64px;margin-top:14px;font-size:21px;font-weight:700;border:0;border-radius:16px;cursor:pointer;color:#fff;text-decoration:none;transition:transform .08s}
+button:active,.btn:active{transform:scale(.97)}
+.primary{background:#238636}
+.ghost{background:#21262d;color:#e6edf3;border:2px solid #30363d}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row button{margin-top:0}
+.yes{background:#238636}.no{background:#30363d}
+.car{min-height:150px;flex-direction:column;font-size:24px;border-radius:22px;margin-top:16px}
+.car .ico{font-size:52px;line-height:1}
+.tesla{background:linear-gradient(135deg,#1f6feb,#7c3aed);box-shadow:0 8px 30px rgba(88,166,255,.35)}
+.bronco{background:linear-gradient(135deg,#d97706,#9a3412);box-shadow:0 8px 30px rgba(217,119,6,.35)}
+.sms{background:#2ea043;font-size:20px;min-height:72px}
+.big{font-size:64px;margin:8px 0 4px}
+.small{font-size:14px;color:#6e7681;margin-top:18px}
+</style>
+</head>
+<body>
+<main>
+  <div class="badge">Fri night · ride poll</div>
+
+  <section class="screen on" id="s-name">
+    <h1>Hey! What's your name? 👋</h1>
+    <form id="nameForm" novalidate>
+      <input id="name" name="name" type="text" maxlength="40" autocomplete="given-name" placeholder="Your name" required>
+      <div class="err" id="nameErr"></div>
+      <button class="primary" type="submit">Next →</button>
+    </form>
+  </section>
+
+  <section class="screen" id="s-q1">
+    <h1>Want me to pick you up for tonight's activities?</h1>
+    <div class="row">
+      <button class="yes" id="btnYes">👍 Yes</button>
+      <button class="no" id="btnNo">👎 No</button>
+    </div>
+  </section>
+
+  <section class="screen" id="s-q2">
+    <h1>Tesla or Bronco?</h1>
+    <button class="car tesla" id="btnTesla"><span class="ico">⚡</span>Tesla</button>
+    <button class="car bronco" id="btnBronco"><span class="ico">🛣️</span>Bronco</button>
+  </section>
+
+  <section class="screen" id="s-done">
+    <div class="big" id="doneIcon">🎉</div>
+    <h1 id="doneTitle">Got it! Tap below so Dom gets your answer</h1>
+    <p id="doneSummary"></p>
+    <a class="btn sms" id="smsLink" href="#">💬 Text Dom my answer</a>
+  </section>
+
+  <section class="screen" id="s-already">
+    <div class="big">✅</div>
+    <h1>Already answered</h1>
+    <p id="alreadySummary"></p>
+    <a class="btn sms" id="smsAgain" href="#">💬 Text Dom my answer</a>
+    <p class="small" style="margin-top:26px">Changed your mind? Text Dom the new answer:</p>
+    <a class="btn ghost" id="chTesla" href="#">⚡ Yes, Tesla</a>
+    <a class="btn ghost" id="chBronco" href="#">🛣️ Yes, Bronco</a>
+    <a class="btn ghost" id="chNo" href="#">👎 No ride needed</a>
+  </section>
+</main>
+<script>
+(function(){
+  var NS = "applesdg-ride-poll-da04107c";
+  var API = "https://abacus.jasoncameron.dev/hit/" + NS + "/";
+  var PHONE = "+18172179760";
+  var STORE = "ridepoll-2026-10-09";
+  var $ = function(id){ return document.getElementById(id); };
+
+  function load(){ try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch(e){ return {}; } }
+  function save(s){ try { localStorage.setItem(STORE, JSON.stringify(s)); } catch(e){} }
+  var st = load();
+
+  function show(id){
+    var s = document.querySelectorAll(".screen");
+    for (var i=0;i<s.length;i++) s[i].classList.remove("on");
+    $(id).classList.add("on");
+    window.scrollTo(0,0);
+  }
+  function hit(key){
+    try { fetch(API + key, {mode:"cors", keepalive:true}).catch(function(){}); } catch(e){}
+  }
+  function answerText(s){
+    if (s.ride === "no") return "No";
+    if (s.car) return "Yes, " + (s.car === "tesla" ? "Tesla" : "Bronco");
+    return "Yes";
+  }
+  function smsHref(body){ return "sms:" + PHONE + "?&body=" + encodeURIComponent(body); }
+  function msg(s){ return "Ride poll: " + s.name + " — " + answerText(s); }
+
+  function renderDone(){
+    if (st.ride === "no"){
+      $("doneIcon").textContent = "🙌";
+      $("doneTitle").textContent = "No worries, see you there!";
+      $("doneSummary").textContent = "Tap below so Dom gets your answer.";
+    } else {
+      $("doneIcon").textContent = st.car === "tesla" ? "⚡" : "🛣️";
+      $("doneTitle").textContent = "Got it! Tap below so Dom gets your answer";
+      $("doneSummary").textContent = st.name + ": " + answerText(st) + ". See you tonight!";
+    }
+    $("smsLink").href = smsHref(msg(st));
+    show("s-done");
+  }
+  function renderAlready(){
+    $("alreadySummary").textContent = "You (" + st.name + ") said: " + answerText(st) + ".";
+    $("smsAgain").href = smsHref(msg(st));
+    $("chTesla").href = smsHref("Ride poll CHANGE: " + st.name + " — Yes, Tesla");
+    $("chBronco").href = smsHref("Ride poll CHANGE: " + st.name + " — Yes, Bronco");
+    $("chNo").href = smsHref("Ride poll CHANGE: " + st.name + " — No");
+    show("s-already");
+  }
+
+  $("nameForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var n = $("name").value.trim().replace(/\s+/g," ");
+    if (!n){ $("nameErr").textContent = "Please enter your name."; $("name").focus(); return; }
+    $("nameErr").textContent = "";
+    st = {name:n}; save(st);
+    show("s-q1");
+  });
+  $("btnYes").addEventListener("click", function(){
+    if (st.ride) return;
+    st.ride = "yes"; save(st); hit("ride_yes"); show("s-q2");
+  });
+  $("btnNo").addEventListener("click", function(){
+    if (st.ride) return;
+    st.ride = "no"; st.done = true; save(st); hit("ride_no"); renderDone();
+  });
+  function pickCar(c){
+    if (st.car) return;
+    st.car = c; st.done = true; save(st); hit(c); renderDone();
+  }
+  $("btnTesla").addEventListener("click", function(){ pickCar("tesla"); });
+  $("btnBronco").addEventListener("click", function(){ pickCar("bronco"); });
+
+  // Resume / once-per-device
+  if (st.done) renderAlready();
+  else if (st.ride === "yes") show("s-q2");
+  else if (st.name){ $("name").value = st.name; }
+})();
+</script>
+</body>
+</html>
